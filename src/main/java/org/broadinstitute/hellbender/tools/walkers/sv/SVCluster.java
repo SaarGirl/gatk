@@ -23,6 +23,7 @@ import org.broadinstitute.hellbender.tools.sv.SVCallRecordUtils;
 import org.broadinstitute.hellbender.tools.sv.cluster.*;
 import org.broadinstitute.hellbender.utils.reference.ReferenceUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -187,6 +188,7 @@ public final class SVCluster extends MultiVariantWalker {
     public static final String CONVERT_INV_LONG_NAME = "convert-inv-to-bnd";
     public static final String ALGORITHM_LONG_NAME = "algorithm";
     public static final String FAST_MODE_LONG_NAME = "fast-mode";
+    public static final String SITES_ONLY_LONG_NAME = "sites-only";
     public static final String OMIT_MEMBERS_LONG_NAME = "omit-members";
     public static final String DEFAULT_NO_CALL_LONG_NAME = "default-no-call";
 
@@ -255,7 +257,8 @@ public final class SVCluster extends MultiVariantWalker {
 
     /**
      * Results in substantial space and time costs for large sample sets by clearing genotypes that are not needed for
-     * clustering, but any associated annotation fields will be set to null in the output.
+     * clustering, but any associated annotation fields will be set to null in the output. Has no effect if using
+     * {@link #SITES_ONLY_LONG_NAME} mode.
      */
     @Argument(
             doc = "Fast mode. Drops hom-ref and no-call genotype fields and emits them as no-calls.",
@@ -263,6 +266,13 @@ public final class SVCluster extends MultiVariantWalker {
             optional = true
     )
     private boolean fastMode = false;
+
+    @Argument(
+            doc = "Drop all samples from input VCF(s) before clustering.",
+            fullName = SITES_ONLY_LONG_NAME,
+            optional = true
+    )
+    private boolean sitesOnly = false;
 
     @Argument(
             doc = "Omit cluster member ID annotations",
@@ -339,7 +349,7 @@ public final class SVCluster extends MultiVariantWalker {
             throw new UserException("Reference sequence dictionary required");
         }
         ploidyTable = new PloidyTable(ploidyTablePath.toPath());
-        samples = getSamplesForVariants();
+        samples = sitesOnly ? Collections.emptySet() : getSamplesForVariants();
 
         if (algorithm == CLUSTER_ALGORITHM.DEFRAGMENT_CNV) {
             clusterEngine = SVClusterEngineFactory.createCNVDefragmenter(dictionary, altAlleleSummaryStrategy,
@@ -376,8 +386,12 @@ public final class SVCluster extends MultiVariantWalker {
     }
 
     @Override
-    public void apply(final VariantContext variant, final ReadsContext readsContext,
+    public void apply(VariantContext variant, final ReadsContext readsContext,
                       final ReferenceContext referenceContext, final FeatureContext featureContext) {
+        if (sitesOnly) {
+            // Remove genotypes if we're in sites-only mode
+            variant = new VariantContextBuilder(variant).genotypes(Collections.emptyList()).make();
+        }
         final SVCallRecord call = SVCallRecordUtils.create(variant, dictionary);
         final SVCallRecord filteredCall;
         if (fastMode && call.getType() != GATKSVVCFConstants.StructuralVariantAnnotationType.CNV) {
