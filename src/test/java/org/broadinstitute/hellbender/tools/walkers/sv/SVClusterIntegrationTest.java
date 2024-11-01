@@ -470,7 +470,6 @@ public class SVClusterIntegrationTest extends CommandLineProgramTest {
                 .addOutput(output)
                 .addVCF(getToolTestDataDir() + "1kgp_test.batch1.pesr.chr22.vcf.gz")
                 .addVCF(getToolTestDataDir() + "1kgp_test.batch1.depth.chr22.vcf.gz")
-                .add(SVCluster.PLOIDY_TABLE_LONG_NAME, getToolTestDataDir() + "1kgp.batch1.ploidy.tsv")
                 .add(SVCluster.VARIANT_PREFIX_LONG_NAME, "SVx")
                 .add(StandardArgumentDefinitions.REFERENCE_LONG_NAME, REFERENCE_PATH)
                 .add(SVCluster.ALGORITHM_LONG_NAME, SVCluster.CLUSTER_ALGORITHM.SINGLE_LINKAGE)

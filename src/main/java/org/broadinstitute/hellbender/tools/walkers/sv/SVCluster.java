@@ -167,6 +167,7 @@ import static org.broadinstitute.hellbender.tools.walkers.sv.JointGermlineCNVSeg
  *     gatk SVCluster \
  *       -V variants.vcf.gz \
  *       -O clustered.vcf.gz \
+ *       --ploidy-table ploidy_table.tsv \
  *       --algorithm SINGLE_LINKAGE
  * </pre>
  *
@@ -223,8 +224,9 @@ public final class SVCluster extends MultiVariantWalker {
      * integers in their respective columns.
      */
     @Argument(
-            doc = "Sample ploidy table (.tsv)",
-            fullName = PLOIDY_TABLE_LONG_NAME
+            doc = "Sample ploidy table (.tsv). Note this is required unless using --" + SITES_ONLY_LONG_NAME + ".",
+            fullName = PLOIDY_TABLE_LONG_NAME,
+            mutex = {SITES_ONLY_LONG_NAME}
     )
     private GATKPath ploidyTablePath;
 
@@ -268,9 +270,10 @@ public final class SVCluster extends MultiVariantWalker {
     private boolean fastMode = false;
 
     @Argument(
-            doc = "Drop all samples from input VCF(s) before clustering.",
+            doc = "Drop all samples from input VCF(s) before clustering. The ploidy table may be omitted if using this " +
+                    "option.",
             fullName = SITES_ONLY_LONG_NAME,
-            optional = true
+            mutex = {}
     )
     private boolean sitesOnly = false;
 
@@ -348,7 +351,11 @@ public final class SVCluster extends MultiVariantWalker {
         if (dictionary == null) {
             throw new UserException("Reference sequence dictionary required");
         }
-        ploidyTable = new PloidyTable(ploidyTablePath.toPath());
+        if (ploidyTablePath == null) {
+            ploidyTable = new PloidyTable(Collections.emptyMap());
+        } else {
+            ploidyTable = new PloidyTable(ploidyTablePath.toPath());
+        }
         samples = sitesOnly ? Collections.emptySet() : getSamplesForVariants();
 
         if (algorithm == CLUSTER_ALGORITHM.DEFRAGMENT_CNV) {
