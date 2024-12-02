@@ -315,6 +315,7 @@ workflows:
              - master
              - ah_var_store
              - vs_1490_fix_curate_input_array_files
+             - gg_test_docker
          tags:
              - /.*/
    - name: GvsIngestTieout
