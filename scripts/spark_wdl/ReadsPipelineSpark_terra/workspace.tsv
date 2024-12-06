@@ -1,2 +1,0 @@
-workspace:gatk	gatk_docker	gatk_spark_jar
-/gatk/gatk	broadinstitute/gatk:4.1.2.0	/gatk/gatk-spark.jar
